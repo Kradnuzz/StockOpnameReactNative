@@ -1,8 +1,10 @@
-import React,{useEffect} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView,Alert} from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { NavigationContainer } from '@react-navigation/native';
 import { openDatabase } from 'react-native-sqlite-storage';
+import { useNavigation } from '@react-navigation/native';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 
 
 
@@ -12,6 +14,8 @@ const db = openDatabase({
 });
 
 export default function Home({navigation}) {
+
+  
 
   const handleDeleteAllItems = () => {
     Alert.alert(
@@ -80,13 +84,17 @@ export default function Home({navigation}) {
     return unsubscribe;
   }, [navigation]);
 
+  const toggleDrawer = () => {
+    navigation.openDrawer();
+  };
 
-  return (
+
+  return (  
     <View style={styles.containeratas}>
       <View style={styles.containermini}>
         <Text style={styles.textBarcode}>Barcode Inventory</Text>
         <View style={styles.button}>
-          <TouchableOpacity style={styles.icon}>
+          <TouchableOpacity style={styles.icon} onPress={toggleDrawer}>
             <Entypo name="menu" size={50} style={styles.icon} />
           </TouchableOpacity>
         </View>
@@ -123,7 +131,7 @@ export default function Home({navigation}) {
                 <Text style={styles.headercardkirib}>Delete All Barcode</Text>
                 <Text style={styles.cardTextKiri}>Click here to delete all items</Text>
               </View>
-              <Entypo name="trash" size={50} style={{color:'#e84118', marginLeft:5}} />
+              <Entypo name="trash" size={50} style={{color:'#e84118', right:'15%'}} />
             </View>
           </TouchableOpacity>
         </ScrollView>
@@ -235,7 +243,7 @@ const styles = StyleSheet.create({
   headercardkirib: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginLeft: 100,
+    marginLeft: '28%',
     color:'#2d3436'
   },
 });

@@ -5,32 +5,19 @@ import { NavigationContainer } from '@react-navigation/native';
 import QRCodeScanner from 'react-native-qrcode-scanner';
 
 
-export default function ScanScreen({navigation,route}) {
+export default function ChangeId({navigation}) {
 
-  const [data,setData] = useState('Scan Something')
-
-  const handleBarcodeScan = (ScannedData) => {
-    setData(ScannedData);
-    navigation.navigate('Add', { barcodeId: ScannedData });
-  };
 
   return (
     <View style={styles.containeratas}>
      <View style={styles.containermini}>
-     <Text style={styles.textBarcode}>Scan Barcode</Text>
+     <Text style={styles.textBarcode}>Change Device Id</Text>
         <View style={styles.button}>
           <TouchableOpacity style={styles.icon} onPress={()=>navigation.goBack()}>
             <Entypo name="back" size={50} style={styles.icon} />
           </TouchableOpacity>
         </View>
     </View>
-    <QRCodeScanner
-      cameraStyle={{ width:375,height:30 ,marginLeft:5,bottom:20}} 
-      onRead={({data}) => handleBarcodeScan(data)}
-      reactivate={true}
-      reactivateTimeout={0}
-      showMarker={true}
-      />
   </View>
   );
 

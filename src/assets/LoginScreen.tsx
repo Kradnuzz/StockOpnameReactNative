@@ -20,7 +20,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      navigation.navigate('Home');
+      navigation.navigate('DrawerNavigator');
     } else {
       alert('Incorrect username or password. Please try again.');
     }
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color:'black'
   },
   input: {
     width: '100%',
@@ -81,6 +82,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderWidth: 1,
     borderColor: '#ccc',
+    color:'black'
   },
   loginButton: {
     width: '100%',
