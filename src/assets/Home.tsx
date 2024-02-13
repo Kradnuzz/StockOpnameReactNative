@@ -13,7 +13,10 @@ const db = openDatabase({
   location:'default'
 });
 
-export default function Home({navigation}) {
+export default function Home({navigation,route}) {
+
+  const { username } = route.params;
+
 
   
 
@@ -68,7 +71,7 @@ export default function Home({navigation}) {
 
       Alert.alert(
         'Logout',
-        'Are you sure you want to logout?',
+        'Do you want to log out?',
         [
           { text: 'Cancel', style: 'cancel', onPress: () => {} },
           {
@@ -99,7 +102,7 @@ export default function Home({navigation}) {
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles.welcome}>Welcome User ...</Text>
+      <Text style={styles.welcome}>Welcome {username} ...</Text>
       <View style={styles.containerbawah}>
         <ScrollView contentContainerStyle={styles.scrollView}>
           <TouchableOpacity style={styles.card} onPress={()=> navigation.navigate('Add')}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-const CustomDrawer = ({ navigation }) => {
+const CustomDrawer = ({ navigation,userLevel,username }) => {
 
   const handleDrawerItemPress = (screenName) => {
     navigation.navigate(screenName);
@@ -27,12 +27,15 @@ const CustomDrawer = ({ navigation }) => {
         >
           <Text style={styles.drawerItemText}>Change Device Id</Text>
         </TouchableOpacity>
+        {userLevel === 'admin' && (
         <TouchableOpacity
-          style={styles.drawerItem}
-          onPress={() => handleDrawerItemPress('Admin')}
+        style={styles.drawerItem}
+        onPress={() => handleDrawerItemPress('AdminPage')}
         >
-          <Text style={styles.drawerItemText}>Add/Remove User</Text>
+        <Text style={styles.drawerItemText}>Add/Remove User</Text>
         </TouchableOpacity>
+)}
+
         <TouchableOpacity
           style={styles.drawerItem}
           onPress={() => handleDrawerItemPress('Authentication')}

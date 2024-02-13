@@ -2,32 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin';
+const DEFAULT_ADMIN_USERNAME = 'Admin';
+const DEFAULT_ADMIN_PASSWORD = 'Admin';
+
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  useEffect(() => {
-    AsyncStorage.getItem('adminUsername').then((value) => {
-      if (!value) {
-        AsyncStorage.setItem('adminUsername', ADMIN_USERNAME);
-        AsyncStorage.setItem('adminPassword', ADMIN_PASSWORD);
-      }
-    });
-  }, []);
-
   const handleLogin = async () => {
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      navigation.navigate('DrawerNavigator');
-    } else {
-      alert('Incorrect username or password. Please try again.');
+    try {
+      const userData = await AsyncStorage.getItem(username);
+      if (userData) {
+        const { password: storedPassword, userLevel } = JSON.parse(userData); 
+        if (storedPassword === password) { 
+          await AsyncStorage.setItem('loggedInUsername', username);
+          navigation.navigate('DrawerNavigator', { userLevel,username }); 
+        } else {
+          alert('Incorrect password. Please try again.');
+        }
+      } else {
+        alert('User not found. Please register.');
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
+      alert('Failed to login. Please try again.');
     }
   };
-
   return (
     <View style={styles.container}>
+
       <View style={styles.formContainer}>
         <Text style={styles.title}>Welcome Back!</Text>
         <TextInput

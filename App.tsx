@@ -13,6 +13,7 @@ import { Drawer } from 'react-native-paper'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import DrawerNavigator from './src/assets/DrawerNavigator'
 import 'react-native-gesture-handler';
+import Admin from './src/assets/AdminPage'
 
 
 
