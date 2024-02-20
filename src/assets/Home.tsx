@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { openDatabase } from 'react-native-sqlite-storage';
 import { useNavigation } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
@@ -16,9 +17,25 @@ const db = openDatabase({
 export default function Home({navigation,route}) {
 
   const { username } = route.params;
+  const [deviceId, setDeviceId] = useState('');
 
 
-  
+  useEffect(() => {
+    loadDeviceId();
+  }, []);
+
+  const loadDeviceId = async () => {
+    try {
+      const savedDeviceId = await AsyncStorage.getItem('deviceId');
+      if (savedDeviceId !== null) {
+        setDeviceId(savedDeviceId);
+      }
+    } catch (error) {
+      console.error('Error loading device ID:', error);
+    }
+  };
+
+
 
   const handleDeleteAllItems = () => {
     Alert.alert(
@@ -105,7 +122,7 @@ export default function Home({navigation,route}) {
       <Text style={styles.welcome}>Welcome {username} ...</Text>
       <View style={styles.containerbawah}>
         <ScrollView contentContainerStyle={styles.scrollView}>
-          <TouchableOpacity style={styles.card} onPress={()=> navigation.navigate('Add')}>
+          <TouchableOpacity style={styles.card} onPress={()=> navigation.navigate('Add',{userId:username,devId:deviceId})}>
             <Entypo name="circle-with-plus" size={70} style={{color:'#44bd32', marginRight: 10}} />
             <View>
               <Text style={styles.headercard}>Add Items</Text>
@@ -121,7 +138,7 @@ export default function Home({navigation,route}) {
               <Entypo name="eye" size={60} style={{color:'#353b48', marginLeft: 10}} />
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.card} onPress={()=>navigation.navigate('ExportItems')}>
+          <TouchableOpacity style={styles.card} onPress={()=>navigation.navigate('ExportItems',{userId:username})}>
             <Entypo name="publish" size={70} style={{color:'#487eb0', marginRight: 10}} />
             <View>
               <Text style={styles.headercard}>Export Data</Text>

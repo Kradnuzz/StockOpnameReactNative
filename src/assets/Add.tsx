@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, ScrollV
 import Entypo from 'react-native-vector-icons/Entypo';
 import { openDatabase } from 'react-native-sqlite-storage';
 import { RadioButton, TextInput } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const db = openDatabase({
   name:"stockopname_sqlite",
@@ -12,62 +13,82 @@ const db = openDatabase({
 export default function Add({ navigation, route }) {
   const [selectedRadio, setSelectedRadio] = useState(1);
   const [barcodeId, setBarcodeId] = useState(route.params?.barcodeId || '');
-  const [shelfId, setShelfId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [recordCount, setRecordCount] = useState(0)
   const [quantityCount, setQuantityCount] = useState(0)
+  const { userId } = route.params;
+  const [devId, setDevId] = useState('');
+
+
+ useEffect(() => {
+    loadDeviceId();
+  }, []);
+
+  useEffect(() => {
+    createTables();
+  }, []);
+
+
+  const loadDeviceId = async () => {
+    try {
+      const savedDeviceId = await AsyncStorage.getItem('deviceId');
+      if (savedDeviceId !== null) {
+        setDevId(savedDeviceId);
+      }
+    } catch (error) {
+      console.error('Error loading device ID:', error);
+    }
+  };
 
   const createTables = async () => {
     try {
       const database = await db;
-      await (await db).transaction(txn => {
-        txn.executeSql('CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY AUTOINCREMENT,shelf_id VARCHAR(20),item_id VARCHAR(20),quantity INTEGER)',
-        [],
-        (sqlTxn, res)=>{
-          console.log("Table created successfully");
-        }
+      await database.transaction(async (txn) => {
+        txn.executeSql(
+          `SELECT name FROM sqlite_master WHERE type='table' AND name='stock'`,
+          [],
+          async (sqlTxn, result) => {
+            if (result.rows.length === 0) {
+              await txn.executeSql(
+                'CREATE TABLE stock (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal DATE, device_id VARCHAR(50), waktu TIME, User_id VARCHAR(50), item_id VARCHAR(20), quantity FLOAT)',
+                [],
+                (sqlTxn, res) => {
+                  console.log("Table created successfully");
+                },
+                (error) => {
+                  console.error('Error creating table:', error);
+                }
+              );
+            } else {
+              // console.log("Table already exists");
+            }
+          },
+          (error) => {
+            console.error('Error checking table existence:', error);
+          }
         );
       });
     } catch (error) {
       console.error('Error creating tables:', error);
     }
   };
-
-  const insertItem = async (shelf_id, item_id, quantity) => {
+  
+  const insertItem = async (tanggal, device_id, waktu, User_id, item_id, quantity) => {
     try {
       const database = await db;
       await database.transaction(async (txn) => {
         await txn.executeSql(
-          `SELECT id, quantity FROM stock WHERE shelf_id = ? AND item_id = ?`,
-          [shelf_id, item_id],
-          async (sqlTxn, result) => {
-            if (result.rows.length > 0) {
-              const existingQuantity = result.rows.item(0).quantity;
-              const updatedQuantity = existingQuantity + quantity;
-              await txn.executeSql(
-                `UPDATE stock SET quantity = ? WHERE shelf_id = ? AND item_id = ?`,
-                [updatedQuantity, shelf_id, item_id],
-                (sqlTxn, res) => {
-                  if (res.rowsAffected > 0) {
-                    console.log(`Updated quantity for item with shelf_id ${shelf_id} and item_id ${item_id}`);
-                  } else {
-                    console.log('Failed to update quantity');
-                  }
-                }
-              );
+          `INSERT INTO stock (tanggal, device_id, waktu, User_id, item_id, quantity) VALUES (?, ?, ?, ?, ?, ?)`,
+          [tanggal, device_id, waktu, User_id, item_id, quantity],
+          (sqlTxn, res) => {
+            if (res.rowsAffected > 0) {
+              console.log(`Inserted row with item_id ${item_id}`);
             } else {
-              await txn.executeSql(
-                `INSERT INTO stock (shelf_id, item_id, quantity) VALUES (?, ?, ?)`,
-                [shelf_id, item_id, quantity],
-                (sqlTxn, res) => {
-                  if (res.rowsAffected > 0) {
-                    console.log(`Inserted row with shelf_id ${shelf_id} and item_id ${item_id}`);
-                  } else {
-                    console.log('Failed to insert row');
-                  }
-                }
-              );
+              console.log('Failed to insert row');
             }
+          },
+          (error) => {
+            console.error('Error inserting data:', error);
           }
         );
       });
@@ -75,22 +96,26 @@ export default function Add({ navigation, route }) {
       console.error(`Error inserting data: ${error.message}`);
     }
   };
-  
-  
 
   const handleSave = async () => {
     await createTables();
-    if (shelfId && barcodeId) {
+    if (barcodeId) {
       let quantityToInsert;
       if (selectedRadio === 1) {
         quantityToInsert = 1;
       } else {
-        quantityToInsert = quantity ? parseInt(quantity) : 1;
+        const quantityWithDot = quantity.replace(',', '.');
+        quantityToInsert = parseFloat(quantityWithDot);
+        if (isNaN(quantityToInsert)) {
+          Alert.alert('Invalid Quantity', 'Please enter a valid quantity.');
+          return;
+        }
+        quantityToInsert = parseFloat(quantityToInsert.toFixed(2));
       }
-      await insertItem(shelfId, barcodeId, quantityToInsert);
-      setShelfId('');
+      const currentDate = new Date().toISOString().split('T')[0];
+      const currentTime = new Date().toLocaleTimeString();
+      await insertItem(currentDate, devId, currentTime, userId, barcodeId, quantityToInsert);
       setBarcodeId('');
-      setSelectedRadio(1);
       setQuantity(''); 
       fetchRecordCount();
       fetchQuantityCount();
@@ -100,9 +125,6 @@ export default function Add({ navigation, route }) {
   };
   
   
-
-  
-
   useEffect(() => {
     if (route.params?.barcodeId) {
       setBarcodeId(route.params.barcodeId);
@@ -121,7 +143,6 @@ export default function Add({ navigation, route }) {
     });
   }, [navigation]);
 
-
   const handleRadioChange = (value) => {
     setSelectedRadio(value);
     if (value === 1) {
@@ -130,7 +151,6 @@ export default function Add({ navigation, route }) {
       setQuantity('');
     }
   };
-
 
   useEffect(() => {
     fetchRecordCount();
@@ -156,7 +176,7 @@ export default function Add({ navigation, route }) {
   };
 
   useEffect(() => {
-      fetchQuantityCount();
+    fetchQuantityCount();
   },[]);
 
   const fetchQuantityCount = async () => {
@@ -177,7 +197,6 @@ export default function Add({ navigation, route }) {
       console.error('Error fetching quantity count:', error);
     }
   };
-
 
   const choice = [
     {
@@ -205,8 +224,7 @@ export default function Add({ navigation, route }) {
           </View>
         </View>
         <View style={styles.containerbawah}>
-          <Text style={{ marginLeft: '10%', marginTop: 40, fontSize: 20, fontFamily: "monospace", fontWeight: 'bold', color: '#00a8ff' }}>Record: {recordCount}</Text>
-          <Text style={{ marginLeft: '55%', bottom: 29.5, right: 25, fontSize: 20, fontFamily: "monospace", fontWeight: 'bold', color: '#00a8ff' }}>Quantity: {quantityCount}</Text>
+          <Text style={{ marginLeft: '35%', marginTop: 40, marginBottom:'5%',fontSize: 20, fontFamily: "monospace", fontWeight: 'bold', color: '#00a8ff' }}>Record: {recordCount}</Text>
           {choice.map((choice) => (
             <TouchableOpacity key={choice.id} onPress={() => setSelectedRadio(choice.id)}>
               <View style={styles.skillContainer}>
@@ -221,19 +239,14 @@ export default function Add({ navigation, route }) {
           ))}
           <TextInput
             style={styles.input}
-            label="Type shelf Id"
-            value={shelfId}
-            onChangeText={setShelfId}
-          />
-          <TextInput
-            style={styles.input}
             label="Type or Scan Barcode ID"
             value={barcodeId}
             onChangeText={setBarcodeId}
           />
-          <TouchableOpacity onPress={() => navigation.navigate('ScanScreen')} style={{ width:100,marginHorizontal:'80%',bottom:'17%'}}>
-              <Entypo name="camera" size={60} color='black'/>
+          <TouchableOpacity onPress={() => navigation.navigate('ScanScreen', { selectedRadio,userId,devId })} style={{ width: 100, marginHorizontal: '80%', bottom: '17%' }}>
+             <Entypo name="camera" size={60} color='black' />
           </TouchableOpacity>
+
 
           {selectedRadio === 2 && (
             <TextInput
@@ -241,12 +254,9 @@ export default function Add({ navigation, route }) {
             label="Quantity"
             value={quantity}
             onChangeText={(text) => {
-              const numericValue = parseInt(text);
-              if (!isNaN(numericValue)) {
-                setQuantity(text);
-              }
+              setQuantity(text); 
             }}
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
           />
           )}
 
@@ -271,7 +281,7 @@ const styles = StyleSheet.create({
   },
   containermini: {
     backgroundColor: '#273c75',
-    height: '9%',
+    height: '13%',
     width: '100%',
     borderRadius: 4
   },

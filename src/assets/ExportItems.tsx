@@ -13,9 +13,28 @@ const db = openDatabase({
 });
 
 
-export default function ExportItems({ navigation }) {
+export default function ExportItems({ navigation,route }) {
   const [serverIp, setServerIp] = useState('');
   const [deleteAllBarcode, setDeleteAllBarcode] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
+  const { userId } = route.params;
+
+
+  useEffect(() => {
+    loadDeviceId();
+  }, []);
+
+
+  const loadDeviceId = async () => {
+    try {
+      const savedDeviceId = await AsyncStorage.getItem('deviceId');
+      if (savedDeviceId !== null) {
+        setDeviceId(savedDeviceId);
+      }
+    } catch (error) {
+      console.error('Error loading device ID:', error);
+    }
+  };
 
   useEffect(() => {
         loadServerIp();
@@ -82,12 +101,16 @@ export default function ExportItems({ navigation }) {
               const row = results.rows.item(i);
               const item = { ...row, barcode: row.item_id };
               delete item.item_id;
+              
+              item.device_id=deviceId.toString();
+              item.user_id = userId.toString(); ;
+  
               items.push(item);
             }
             await sendItemsToBackend(items);
             if (deleteAllBarcode) {
               console.log('Deleting all barcodes...');
-              await deleteAllItems(); // Call deleteAllItems function here
+              await deleteAllItems(); 
             }
           },
           (error) => {
@@ -101,6 +124,7 @@ export default function ExportItems({ navigation }) {
       alert('Failed to access database.');
     }
   };
+  
 
 
   const sendItemsToBackend = async (items) => {

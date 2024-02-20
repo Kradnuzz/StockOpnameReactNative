@@ -5,10 +5,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const DEFAULT_ADMIN_USERNAME = 'Admin';
 const DEFAULT_ADMIN_PASSWORD = 'Admin';
 
-
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    const initializeAdminUser = async () => {
+      try {
+        const adminData = await AsyncStorage.getItem(DEFAULT_ADMIN_USERNAME);
+        if (!adminData) {
+          const adminUserData = {
+            username: DEFAULT_ADMIN_USERNAME,
+            password: DEFAULT_ADMIN_PASSWORD,
+            userLevel: 'admin',
+          };
+          await AsyncStorage.setItem(DEFAULT_ADMIN_USERNAME, JSON.stringify(adminUserData));
+        }
+      } catch (error) {
+        console.error('Error initializing admin user:', error);
+      }
+    };
+
+    initializeAdminUser();
+  }, []);
 
   const handleLogin = async () => {
     try {

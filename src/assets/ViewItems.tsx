@@ -4,6 +4,7 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import { NavigationContainer } from '@react-navigation/native';
 import { openDatabase } from 'react-native-sqlite-storage';
 import { TextInput } from 'react-native-paper';
+import { Float } from 'react-native/Libraries/Types/CodegenTypes';
 
 const db = openDatabase({
   name: "stockopname_sqlite",
@@ -27,27 +28,27 @@ export default function ViewItems({ navigation }) {
   }, []);
 
   const fetchItems = async () => {
-    try {
-      const database = await db;
-      await database.transaction(async (txn) => {
-        await txn.executeSql(
-          'SELECT * FROM stock ORDER BY id DESC',
-          [],
-          (sqlTxn, result) => {
-            const len = result.rows.length;
-            const fetchedItems = [];
-            for (let i = 0; i < len; i++) {
-              fetchedItems.push(result.rows.item(i));
-            }
-            setItems(fetchedItems);
-          },
-          (error) => console.error('Error fetching items:', error)
-        );
-      });
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    }
-  };
+  try {
+    const database = await db;
+    await database.transaction(async (txn) => {
+      await txn.executeSql(
+        'SELECT * FROM stock ORDER BY id DESC',
+        [],
+        (sqlTxn, result) => {
+          const len = result.rows.length;
+          const fetchedItems = [];
+          for (let i = 0; i < len; i++) {
+            fetchedItems.push(result.rows.item(i));
+          }
+          setItems(fetchedItems);
+        },
+        (error) => console.error('Error fetching items:', error)
+      );
+    });
+  } catch (error) {
+    console.error('Error fetching items:', error);
+  }
+};
 
   const deleteItem = async (id) => {
     Alert.alert(
@@ -87,16 +88,19 @@ export default function ViewItems({ navigation }) {
   };
 
   const filteredItems = items.filter(item => {
-    const barcodeMatch = item.item_id.toLowerCase().includes(searchQuery.toLowerCase());
-    const shelfMatch = item.shelf_id.toLowerCase().includes(searchQuery.toLowerCase());
+    const barcodeMatch = item.item_id && item.item_id.toLowerCase().includes(searchQuery.toLowerCase());
+    const shelfMatch = item.shelf_id && item.shelf_id.toLowerCase().includes(searchQuery.toLowerCase());
     return barcodeMatch || shelfMatch;
   });
 
   const renderItem = ({ item }) => (
     <View style={styles.item}>
-      <Text style={styles.itemtext}>{`Shelf ID: ${item.shelf_id}`}</Text>
-      <Text style={styles.itemtext}>{`Item ID: ${item.item_id}`}</Text>
-      <Text style={styles.itemtext}>{`Quantity: ${item.quantity}`}</Text>
+      <Text style={styles.itemtext}>Tanggal:{item.tanggal}</Text>
+      <Text style={styles.itemtext}>DeviceId:{item.device_id}</Text>
+      <Text style={styles.itemtext}>Waktu:{item.waktu}</Text>
+      <Text style={styles.itemtext}>Username:{item.User_id}</Text>
+      <Text style={styles.itemtext}>Barcode:{item.item_id}</Text>
+      <Text style={styles.itemtext}>Quantity:{item.quantity.toFixed(2)}</Text>
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => deleteItem(item.id)}
